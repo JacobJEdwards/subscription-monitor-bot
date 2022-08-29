@@ -7,6 +7,7 @@
 import datetime
 import logging
 from datetime import date
+from dateutil.relativedelta import relativedelta
 from typing import Optional, Tuple
 import redis
 
@@ -57,12 +58,14 @@ async def memberStatusChange(update: Update, context: CallbackContext) -> None:
         return
     was_member, is_member = result
 
-    today = date.today().strftime("%d/%m/%Y")
+    subscription_start = date.today().strftime('%d/%m/%Y')
+    subscription_end = (date.today() + relativedelta(months=+1)).strftime('%d/%m/%Y')
+
     memberID = update.chat_member.new_chat_member.user.id
     chatID = update.effective_chat.id
 
     if not was_member and is_member:
-        r.rpush(memberID, today, chatID)
+        r.rpush(memberID, subscription_start, subscription_end, chatID)
     # add user id to database, and date
 
     elif was_member and not is_member:
@@ -79,11 +82,10 @@ async def checkSubscriptions(context: CallbackContext) -> None:
 
     # iterates through each user and checks their subscription is valid
     for key in r.scan_iter():
-        dateAdded = r.lindex(key, 0).decode()
+        subscription_end = r.lindex(key, 1).decode()
         # if subscription invalid, calls kick function
-        if dateAdded[0:2] == today[0:2] and (int(dateAdded[3:5]) + 1 == (int(today[3:5])) or
-                                             (dateAdded[3:5] == '12' and today[3:5] == '01')):
-            chat_id = r.lindex(key, 1).decode()
+        if today == subscription_end:
+            chat_id = r.lindex(key, 2).decode()
             await kickUser(context, key.decode(), chat_id)
 
 
@@ -102,7 +104,7 @@ def main() -> None:
     job_queue = application.job_queue
 
     # runs daily
-    check_subscription = job_queue.run_daily(checkSubscriptions, time=datetime.time(hour=11, minute=41, second=10))
+    check_subscription = job_queue.run_daily(checkSubscriptions, time=datetime.time(hour=13, minute=5, second=15))
 
     # called when new user has been added
     # Handle members joining/leaving chats.
