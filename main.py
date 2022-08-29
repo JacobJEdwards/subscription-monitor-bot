@@ -73,7 +73,7 @@ async def memberStatusChange(update: Update, context: CallbackContext) -> None:
             r.delete(memberID)
         except:
             pass
-    # remove user from database
+    # remove user from database if they leave - prevents errors
 
 
 # called daily to check if anyone's subscription has ended
@@ -104,7 +104,7 @@ def main() -> None:
     job_queue = application.job_queue
 
     # runs daily
-    check_subscription = job_queue.run_daily(checkSubscriptions, time=datetime.time(hour=13, minute=5, second=15))
+    check_subscription = job_queue.run_daily(checkSubscriptions, time=datetime.time(hour=8))
 
     # called when new user has been added
     # Handle members joining/leaving chats.
