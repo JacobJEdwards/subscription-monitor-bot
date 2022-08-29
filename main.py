@@ -1,3 +1,9 @@
+# instead of adding date joined to database, add date subscription ends
+# then compare the todays date to subscription end date
+# this allows for possibility os subscription renewal
+# look into datetime functionality
+
+
 import datetime
 import logging
 from datetime import date
@@ -9,6 +15,7 @@ from telegram.constants import ParseMode
 from telegram.ext import Application, ChatMemberHandler, CommandHandler, ContextTypes, CallbackContext
 
 BOT_TOKEN = ***REMOVED***
+CHAT_ID = ''
 
 # enable logging
 logging.basicConfig(
@@ -20,6 +27,7 @@ logger = logging.getLogger(__name__)
 r = redis.Redis()
 
 
+# allows the bot to know if a member update is a join or leave
 def getStatusChange(chat_member_update: ChatMemberUpdated) -> Optional[Tuple[bool, bool]]:
     status_change = chat_member_update.difference().get("status")
     old_is_member, new_is_member = chat_member_update.difference().get("is_member", (None, None))
@@ -51,13 +59,13 @@ async def memberStatusChange(update: Update, context: CallbackContext) -> None:
 
     today = date.today().strftime("%d/%m/%Y")
     memberID = update.chat_member.new_chat_member.user.id
+    chatID = update.effective_chat.id
 
     if not was_member and is_member:
-        r.rpush(memberID, today)
+        r.rpush(memberID, today, chatID)
     # add user id to database, and date
 
     elif was_member and not is_member:
-        print('deleting user')
         try:
             r.delete(memberID)
         except:
@@ -65,19 +73,28 @@ async def memberStatusChange(update: Update, context: CallbackContext) -> None:
     # remove user from database
 
 
+# called daily to check if anyone's subscription has ended
 async def checkSubscriptions(context: CallbackContext) -> None:
     today = date.today().strftime("%d/%m/%Y")
 
+    # iterates through each user and checks their subscription is valid
     for key in r.scan_iter():
         dateAdded = r.lindex(key, 0).decode()
-        if dateAdded[0:2] == today[0:2] and (int(dateAdded[3:5]) + 1 == (int(today[3:5]) or (dateAdded[3:5] == '12' and today[3:5] == '1'):
-            await kickUser(update, context, key)
+        # if subscription invalid, calls kick function
+        if dateAdded[0:2] == today[0:2] and (int(dateAdded[3:5]) + 1 == (int(today[3:5])) or
+                                             (dateAdded[3:5] == '12' and today[3:5] == '01')):
+            chat_id = r.lindex(key, 1).decode()
+            await kickUser(context, key.decode(), chat_id)
 
-async def kickUser(update: Update, context: ContextTypes.DEFAULT_TYPE, userid) -> None:
+
+# bans an invalid user
+async def kickUser(context: ContextTypes.DEFAULT_TYPE, userid, chat_id) -> None:
     # called from check subscriptions
-    pass
+    await context.bot.banChatMember(chat_id=chat_id, user_id=userid)
+    r.delete(userid)
 
 
+# creates the bot and handlers
 def main() -> None:
     # creates bot
     application = Application.builder().token(BOT_TOKEN).build()
@@ -85,7 +102,7 @@ def main() -> None:
     job_queue = application.job_queue
 
     # runs daily
-    check_subscription = job_queue.run_daily(checkSubscriptions, time=datetime.time(hour=11, minute=0, second=0))
+    check_subscription = job_queue.run_daily(checkSubscriptions, time=datetime.time(hour=11, minute=41, second=10))
 
     # called when new user has been added
     # Handle members joining/leaving chats.
