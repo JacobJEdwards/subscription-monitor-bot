@@ -2,6 +2,7 @@ import datetime
 import logging
 from datetime import date
 from typing import Optional, Tuple
+import redis
 
 from telegram import *
 from telegram.constants import ParseMode
@@ -15,6 +16,8 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger(__name__)
+
+r = redis.Redis()
 
 
 def getStatusChange(chat_member_update: ChatMemberUpdated) -> Optional[Tuple[bool, bool]]:
@@ -45,24 +48,30 @@ async def memberStatusChange(update: Update, context: CallbackContext) -> None:
     if result is None:
         return
     was_member, is_member = result
+
     today = date.today().strftime("%d/%m/%Y")
     memberID = update.chat_member.new_chat_member.user.id
 
     if not was_member and is_member:
-        print(memberID)
-        pass
+        r.rpush(memberID, today)
     # add user id to database, and date
 
     elif was_member and not is_member:
-        print(memberID)
-        pass
+        print('deleting user')
+        try:
+            r.delete(memberID)
+        except:
+            pass
     # remove user from database
 
 
 async def checkSubscriptions(context: CallbackContext) -> None:
     today = date.today().strftime("%d/%m/%Y")
-    print(today)
 
+    for key in r.scan_iter():
+        dateAdded = r.lindex(key, 0).decode()
+        if dateAdded[0:2] == today[0:2] and (int(dateAdded[3:5]) + 1 == (int(today[3:5]) or (dateAdded[3:5] == '12' and today[3:5] == '1'):
+            await kickUser(update, context, key)
 
 async def kickUser(update: Update, context: ContextTypes.DEFAULT_TYPE, userid) -> None:
     # called from check subscriptions
@@ -76,7 +85,7 @@ def main() -> None:
     job_queue = application.job_queue
 
     # runs daily
-    check_subscription = job_queue.run_daily(checkSubscriptions, time=datetime.time(hour=0))
+    check_subscription = job_queue.run_daily(checkSubscriptions, time=datetime.time(hour=11, minute=0, second=0))
 
     # called when new user has been added
     # Handle members joining/leaving chats.
