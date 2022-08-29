@@ -1,22 +1,15 @@
-# instead of adding date joined to database, add date subscription ends
-# then compare the todays date to subscription end date
-# this allows for possibility os subscription renewal
-# look into datetime functionality
-
 
 import datetime
 import logging
 from datetime import date
-from dateutil.relativedelta import relativedelta
 from typing import Optional, Tuple
-import redis
 
+import redis
+from dateutil.relativedelta import relativedelta
 from telegram import *
-from telegram.constants import ParseMode
-from telegram.ext import Application, ChatMemberHandler, CommandHandler, ContextTypes, CallbackContext
+from telegram.ext import Application, ChatMemberHandler, ContextTypes, CallbackContext
 
 BOT_TOKEN = ***REMOVED***
-CHAT_ID = ''
 
 # enable logging
 logging.basicConfig(
@@ -53,6 +46,7 @@ def getStatusChange(chat_member_update: ChatMemberUpdated) -> Optional[Tuple[boo
 
 # called when a new member joins, or leaves
 async def memberStatusChange(update: Update, context: CallbackContext) -> None:
+    # checks whether member joined or leaves
     result = getStatusChange(update.chat_member)
     if result is None:
         return
