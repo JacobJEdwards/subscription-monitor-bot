@@ -1,11 +1,13 @@
+import datetime
 import logging
 from datetime import date
+from typing import Optional, Tuple
 
 from telegram import *
 from telegram.constants import ParseMode
-from telegram.ext import Application, ChatMemberHandler, CommandHandler, ContextTypes
+from telegram.ext import Application, ChatMemberHandler, CommandHandler, ContextTypes, CallbackContext
 
-BOT_TOKEN = ''
+BOT_TOKEN = ***REMOVED***
 
 # enable logging
 logging.basicConfig(
@@ -38,7 +40,7 @@ def getStatusChange(chat_member_update: ChatMemberUpdated) -> Optional[Tuple[boo
 
 
 # called when a new member joins, or leaves
-async def memberStatusChange(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def memberStatusChange(update: Update, context: CallbackContext) -> None:
     result = getStatusChange(update.chat_member)
     if result is None:
         return
@@ -47,16 +49,19 @@ async def memberStatusChange(update: Update, context: ContextTypes.DEFAULT_TYPE)
     memberID = update.chat_member.new_chat_member.user.id
 
     if not was_member and is_member:
+        print(memberID)
         pass
     # add user id to database, and date
 
     elif was_member and not is_member:
+        print(memberID)
         pass
     # remove user from database
 
 
-async def checkSubscriptions(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def checkSubscriptions(context: CallbackContext) -> None:
     today = date.today().strftime("%d/%m/%Y")
+    print(today)
 
 
 async def kickUser(update: Update, context: ContextTypes.DEFAULT_TYPE, userid) -> None:
@@ -71,11 +76,13 @@ def main() -> None:
     job_queue = application.job_queue
 
     # runs daily
-    check_subscription = job_queue.run_daily(checkSubscriptions)
+    check_subscription = job_queue.run_daily(checkSubscriptions, time=datetime.time(hour=0))
 
     # called when new user has been added
     # Handle members joining/leaving chats.
     application.add_handler(ChatMemberHandler(memberStatusChange, ChatMemberHandler.CHAT_MEMBER))
+
+    application.run_polling(allowed_updates=Update.ALL_TYPES)
 
 
 if __name__ == '__main__':
