@@ -56,10 +56,11 @@ async def memberStatusChange(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
 
 async def checkSubscriptions(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    today = datetime.today().strftime("%d/%m/%Y")
+    today = date.today().strftime("%d/%m/%Y")
 
 
-async def kickUser() -> None:
+async def kickUser(update: Update, context: ContextTypes.DEFAULT_TYPE, userid) -> None:
+    # called from check subscriptions
     pass
 
 
