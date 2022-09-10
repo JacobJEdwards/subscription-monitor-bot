@@ -7,7 +7,7 @@ from typing import Optional, Tuple
 import redis
 from dateutil.relativedelta import relativedelta
 from telegram import *
-from telegram.ext import Application, ChatMemberHandler, ContextTypes, CallbackContext
+from telegram.ext import Application, ChatMemberHandler, ContextTypes, CallbackContext, CommandHandler
 
 BOT_TOKEN = ***REMOVED***
 
@@ -90,6 +90,34 @@ async def kickUser(context: ContextTypes.DEFAULT_TYPE, userid, chat_id) -> None:
     r.delete(userid)
 
 
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await update.message.reply_text('Use /check followed by a user id to view the users subscription')
+
+
+async def manualCheck(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    try:
+        userID = context.args[0]
+    except IndexError:
+        await update.message.reply_text('Please use this command followed by a user id!\nFor example:\n*/check'
+                                        ' 6043385959*', parse_mode='Markdown')
+        return
+
+    if not userID.isnumeric():
+        await update.message.reply_text('Invalid user id')
+        return
+
+    if not r.exists(userID):
+        await update.message.reply_text('User is not a member!')
+        return
+
+    subscription_end = r.lindex(userID, 1).decode()
+    subscription_start = r.lindex(userID, 0).decode()
+    chatID = r.lindex(userID, 2).decode()
+
+    await update.message.reply_text(f'*User {userID}*\n*Chat: *{chatID}\n*Subscription start: *{subscription_start}'
+                                    f'\n*Subscription end: *{subscription_end}', parse_mode='Markdown')
+
+
 # creates the bot and handlers
 def main() -> None:
     # creates bot
@@ -103,6 +131,10 @@ def main() -> None:
     # called when new user has been added
     # Handle members joining/leaving chats.
     application.add_handler(ChatMemberHandler(memberStatusChange, ChatMemberHandler.CHAT_MEMBER))
+
+    # command handlers
+    application.add_handler(CommandHandler('start', start))
+    application.add_handler(CommandHandler('check', manualCheck))
 
     application.run_polling(allowed_updates=Update.ALL_TYPES)
 
