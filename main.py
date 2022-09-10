@@ -103,7 +103,7 @@ async def manualCheck(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         return
 
     if not userID.isnumeric():
-        await update.message.reply_text('Invalid user id')
+        await update.message.reply_text('Invalid User ID')
         return
 
     if not r.exists(userID):
