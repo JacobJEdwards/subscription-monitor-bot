@@ -57,7 +57,7 @@ async def memberStatusChange(update: Update, context: CallbackContext) -> None:
 
     memberID = update.chat_member.new_chat_member.user.id
     chatID = update.effective_chat.id
-    username = update.chat_member.new_chat_member.user.username
+    username = update.chat_member.new_chat_member.user.first_name+' '+update.chat_member.new_chat_member.user.last_name
 
     if not was_member and is_member:
         r.rpush(memberID, subscription_start, subscription_end, chatID, username)
