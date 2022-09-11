@@ -114,10 +114,7 @@ async def manualCheck(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     subscription_end = r.lindex(userID, 1).decode()
     subscription_start = r.lindex(userID, 0).decode()
     chatID = r.lindex(userID, 2).decode()
-    try:
-        username = r.lindex(userID, 3).decode()
-    except:
-        username = 'User Unknown!'
+    username = r.lindex(userID, 3).decode()
 
     await update.message.reply_text(f'*User ID{userID}*\n*Username: *{username}\n*Chat: *{chatID}\n*Subscription start:'
                                     f' *{subscription_start}'f'\n*Subscription end: *{subscription_end}'
