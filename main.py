@@ -57,9 +57,10 @@ async def memberStatusChange(update: Update, context: CallbackContext) -> None:
 
     memberID = update.chat_member.new_chat_member.user.id
     chatID = update.effective_chat.id
+    username = update.chat_member.new_chat_member.user.username
 
     if not was_member and is_member:
-        r.rpush(memberID, subscription_start, subscription_end, chatID)
+        r.rpush(memberID, subscription_start, subscription_end, chatID, username)
     # add user id to database, and date
 
     elif was_member and not is_member:
@@ -113,9 +114,14 @@ async def manualCheck(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     subscription_end = r.lindex(userID, 1).decode()
     subscription_start = r.lindex(userID, 0).decode()
     chatID = r.lindex(userID, 2).decode()
+    try:
+        username = r.lindex(userID, 3).decode()
+    except:
+        username = 'User Unknown!'
 
-    await update.message.reply_text(f'*User {userID}*\n*Chat: *{chatID}\n*Subscription start: *{subscription_start}'
-                                    f'\n*Subscription end: *{subscription_end}', parse_mode='Markdown')
+    await update.message.reply_text(f'*User ID{userID}*\n*Username: *{username}\n*Chat: *{chatID}\n*Subscription start:'
+                                    f' *{subscription_start}'f'\n*Subscription end: *{subscription_end}'
+                                    , parse_mode='Markdown')
 
 
 # creates the bot and handlers
