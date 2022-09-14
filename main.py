@@ -125,7 +125,7 @@ async def dailyCheck(context: CallbackContext) -> None:
     today = date.today().strftime("%d/%m/%Y")
 
     filename = f'{today}.txt'
-    with open(filename, 'w') as file:
+    with open(filename, 'rw') as file:
         for key in r.scan_iter():
             user_id = key
             subscription_start = r.lindex(key, 0).decode()
@@ -136,7 +136,7 @@ async def dailyCheck(context: CallbackContext) -> None:
             file.write(f'{username}: {user_id}\nChat ID: {chat_id}\nSubscription start: {subscription_start}\n'
                        f'Subscription end: {subscription_end}\n\n')
 
-    await context.bot.send_document(document=filename, chat_id=)
+    await context.bot.send_document(document=filename, chat_id='***REMOVED***')
 
 
 # creates the bot and handlers
@@ -148,7 +148,7 @@ def main() -> None:
 
     # runs daily
     check_subscription = job_queue.run_daily(checkSubscriptions, time=datetime.time(hour=8))
-    daily_message = job_queue.run_daily(dailyCheck, time=datetime.time(hour=7, minute=30))
+    daily_message = job_queue.run_daily(dailyCheck, time=datetime.time(hour=10, minute=52, second=30))
 
     # called when new user has been added
     # Handle members joining/leaving chats.
