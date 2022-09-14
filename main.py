@@ -8,6 +8,7 @@ import redis
 from dateutil.relativedelta import relativedelta
 from telegram import *
 from telegram.ext import Application, ChatMemberHandler, ContextTypes, CallbackContext, CommandHandler
+import os
 
 BOT_TOKEN = ***REMOVED***
 
@@ -122,21 +123,25 @@ async def manualCheck(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
 
 
 async def dailyCheck(context: CallbackContext) -> None:
-    today = date.today().strftime("%d/%m/%Y")
+    today = date.today().strftime("%d-%m-%Y")
 
     filename = f'{today}.txt'
-    with open(filename, 'rw') as file:
+
+    with open(filename, 'w') as file:
         for key in r.scan_iter():
-            user_id = key
+            user_id = key.decode()
             subscription_start = r.lindex(key, 0).decode()
             subscription_end = r.lindex(key, 1).decode()
-            chat_id = r.lindex(key, 2)
-            username = r.lindex(key, 3)
+            chat_id = r.lindex(key, 2).decode()
+            username = r.lindex(key, 3).decode()
 
             file.write(f'{username}: {user_id}\nChat ID: {chat_id}\nSubscription start: {subscription_start}\n'
                        f'Subscription end: {subscription_end}\n\n')
 
-    await context.bot.send_document(document=filename, chat_id='***REMOVED***')
+    await context.bot.send_document(document=open(filename, 'rb'), chat_id='***REMOVED***')
+
+    if os.path.exists(filename):
+        os.remove(filename)
 
 
 # creates the bot and handlers
@@ -148,7 +153,7 @@ def main() -> None:
 
     # runs daily
     check_subscription = job_queue.run_daily(checkSubscriptions, time=datetime.time(hour=8))
-    daily_message = job_queue.run_daily(dailyCheck, time=datetime.time(hour=10, minute=52, second=30))
+    daily_message = job_queue.run_daily(dailyCheck, time=datetime.time(hour=7))
 
     # called when new user has been added
     # Handle members joining/leaving chats.
