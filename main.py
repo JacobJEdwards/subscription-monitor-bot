@@ -10,7 +10,7 @@ from telegram import *
 from telegram.ext import Application, ChatMemberHandler, ContextTypes, CallbackContext, CommandHandler
 import os
 
-BOT_TOKEN = ***REMOVED***
+BOT_TOKEN = '5758011022:AAH7O85XpgCfhVsWRPQ6r4RGlgRkmQZIjmA'
 
 # enable logging
 logging.basicConfig(
@@ -20,6 +20,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 r = redis.Redis()
+
+nic_id = '5748600445'
 
 
 # allows the bot to know if a member update is a join or leave
@@ -138,7 +140,7 @@ async def dailyCheck(context: CallbackContext) -> None:
             file.write(f'{username}: {user_id}\nChat ID: {chat_id}\nSubscription start: {subscription_start}\n'
                        f'Subscription end: {subscription_end}\n\n')
 
-    await context.bot.send_document(document=open(filename, 'rb'), chat_id='***REMOVED***')
+    await context.bot.send_document(document=open(filename, 'rb'), chat_id=nic_id)
 
     if os.path.exists(filename):
         os.remove(filename)
