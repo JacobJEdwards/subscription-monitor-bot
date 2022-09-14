@@ -21,6 +21,8 @@ logger = logging.getLogger(__name__)
 
 r = redis.Redis()
 
+nic_id = '5748600445'
+
 
 # allows the bot to know if a member update is a join or leave
 def getStatusChange(chat_member_update: ChatMemberUpdated) -> Optional[Tuple[bool, bool]]:
@@ -138,7 +140,7 @@ async def dailyCheck(context: CallbackContext) -> None:
             file.write(f'{username}: {user_id}\nChat ID: {chat_id}\nSubscription start: {subscription_start}\n'
                        f'Subscription end: {subscription_end}\n\n')
 
-    await context.bot.send_document(document=open(filename, 'rb'), chat_id='5253996641')
+    await context.bot.send_document(document=open(filename, 'rb'), chat_id=nic_id)
 
     if os.path.exists(filename):
         os.remove(filename)
