@@ -122,8 +122,21 @@ async def manualCheck(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
 
 
 async def dailyCheck(context: CallbackContext) -> None:
-    for key in r.scan_iter():
+    today = date.today().strftime("%d/%m/%Y")
 
+    filename = f'{today}.txt'
+    with open(filename, 'w') as file:
+        for key in r.scan_iter():
+            user_id = key
+            subscription_start = r.lindex(key, 0).decode()
+            subscription_end = r.lindex(key, 1).decode()
+            chat_id = r.lindex(key, 2)
+            username = r.lindex(key, 3)
+
+            file.write(f'{username}: {user_id}\nChat ID: {chat_id}\nSubscription start: {subscription_start}\n'
+                       f'Subscription end: {subscription_end}\n\n')
+
+    await context.bot.send_document(document=filename, chat_id=)
 
 
 # creates the bot and handlers
