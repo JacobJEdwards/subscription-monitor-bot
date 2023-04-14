@@ -177,10 +177,8 @@ def main() -> None:
     job_queue = application.job_queue
 
     # runs daily
-    check_subscription = job_queue.run_daily(
-        checkSubscriptions, time=datetime.time(hour=8)
-    )
-    daily_message = job_queue.run_daily(dailyCheck, time=datetime.time(hour=7))
+    job_queue.run_daily(checkSubscriptions, time=datetime.time(hour=8))
+    job_queue.run_daily(dailyCheck, time=datetime.time(hour=7))
 
     # called when new user has been added
     # Handle members joining/leaving chats.
